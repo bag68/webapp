@@ -1,9 +1,542 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <!-- ... (остальная часть head без изменений) ... -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PigFarm Market</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* Добавим стиль для кнопки повтора */
+        /* Стили остаются без изменений */
+        :root {
+            --primary: #6a11cb;
+            --secondary: #2575fc;
+            --accent: #ff2d95;
+            --light: #ffffff;
+            --dark: #1a1a2e;
+            --gray: #a9a9a9;
+            --success: #00c853;
+            --warning: #ffab00;
+            --error: #ff1744;
+            --card-bg: rgba(255, 255, 255, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--dark), #16213e);
+            color: var(--light);
+            min-height: 100vh;
+            padding-bottom: 70px;
+        }
+
+        .container {
+            max-width: 100%;
+            padding: 15px;
+        }
+
+        .header {
+            text-align: center;
+            padding: 20px 0;
+            margin-bottom: 20px;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            border-radius: 0 0 20px 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: "";
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
+            z-index: 0;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 800;
+            position: relative;
+            z-index: 1;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            letter-spacing: 1px;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-top: 5px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .tabs {
+            display: flex;
+            background: var(--card-bg);
+            border-radius: 15px;
+            margin-bottom: 20px;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .tab {
+            flex: 1;
+            text-align: center;
+            padding: 15px 0;
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 600;
+            position: relative;
+            color: var(--gray);
+        }
+
+        .tab.active {
+            color: var(--light);
+        }
+
+        .tab.active::after {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 70%;
+            height: 3px;
+            background: var(--accent);
+            border-radius: 3px;
+        }
+
+        .tab:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .tab i {
+            display: block;
+            font-size: 20px;
+            margin-bottom: 5px;
+        }
+
+        .content {
+            display: none;
+        }
+
+        .content.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            transition: var(--transition);
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-title i {
+            color: var(--accent);
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .product-card {
+            background: linear-gradient(to bottom right, rgba(38, 117, 252, 0.15), rgba(106, 17, 203, 0.15));
+            border-radius: 15px;
+            overflow: hidden;
+            transition: var(--transition);
+            position: relative;
+            height: 220px;
+        }
+
+        .product-card:hover {
+            transform: scale(1.03);
+        }
+
+        .product-image {
+            width: 100%;
+            height: 120px;
+            background-size: cover;
+            background-position: center;
+        }
+
+        .product-info {
+            padding: 12px;
+        }
+
+        .product-name {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .product-price {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .product-stats {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            margin-top: 5px;
+            color: var(--gray);
+        }
+
+        .badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: var(--accent);
+            color: white;
+            font-size: 10px;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+
+        .balance-display {
+            text-align: center;
+            padding: 30px 0;
+            margin: 20px 0;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .balance-display::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M0,0 L100,0 L100,100 Z" fill="rgba(255,255,255,0.05)"/></svg>');
+            background-size: cover;
+        }
+
+        .balance-label {
+            font-size: 16px;
+            opacity: 0.9;
+            margin-bottom: 10px;
+            position: relative;
+        }
+
+        .balance-amount {
+            font-size: 40px;
+            font-weight: 800;
+            position: relative;
+        }
+
+        .balance-currency {
+            font-size: 20px;
+            margin-left: 5px;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 15px;
+            border-radius: 12px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--secondary);
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .order-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .order-item {
+            background: linear-gradient(to right, rgba(38, 117, 252, 0.1), rgba(106, 17, 203, 0.1));
+            border-radius: 15px;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .order-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            background: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .order-details {
+            flex: 1;
+        }
+
+        .order-id {
+            font-size: 14px;
+            color: var(--gray);
+            margin-bottom: 5px;
+        }
+
+        .order-status {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .order-price {
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .status-badge {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-completed {
+            background: rgba(0, 200, 83, 0.2);
+            color: var(--success);
+        }
+
+        .status-pending {
+            background: rgba(255, 171, 0, 0.2);
+            color: var(--warning);
+        }
+
+        .status-canceled {
+            background: rgba(255, 23, 68, 0.2);
+            color: var(--error);
+        }
+
+        .loader {
+            text-align: center;
+            padding: 30px;
+        }
+
+        .loader-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(255, 255, 255, 0.1);
+            border-top: 5px solid var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            padding: 15px 25px;
+            border-radius: 50px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: slideUp 0.5s ease, fadeOut 0.5s ease 2.5s forwards;
+        }
+
+        @keyframes slideUp {
+            from { bottom: -50px; opacity: 0; }
+            to { bottom: 20px; opacity: 1; }
+        }
+
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+
+        .error-message {
+            text-align: center;
+            padding: 20px;
+            color: var(--error);
+            background: rgba(255, 23, 68, 0.1);
+            border-radius: 15px;
+            margin: 20px 0;
+        }
+
+        .product-detail {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(26, 26, 46, 0.95);
+            z-index: 1000;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .product-detail.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .product-detail-content {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 20px;
+            margin-top: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .detail-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .detail-close {
+            background: transparent;
+            border: none;
+            color: var(--light);
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .detail-image {
+            width: 100%;
+            height: 250px;
+            background-size: cover;
+            background-position: center;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+
+        .detail-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .detail-price {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--accent);
+            margin-bottom: 20px;
+        }
+
+        .detail-description {
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .detail-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .detail-btn {
+            flex: 1;
+            padding: 15px;
+            border-radius: 12px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .detail-btn-outline {
+            background: transparent;
+            border: 2px solid var(--secondary);
+        }
+
+        @media (max-width: 480px) {
+            .products-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 24px;
+            }
+            
+            .detail-image {
+                height: 200px;
+            }
+        }
+
         .retry-btn {
             background: var(--accent);
             color: white;
@@ -17,7 +550,95 @@
     </style>
 </head>
 <body>
-    <!-- ... (остальная часть body без изменений) ... -->
+    <div class="container">
+        <div class="header">
+            <h1>PigFarm Market</h1>
+            <p>Твой стильный маркетплейс в Telegram</p>
+        </div>
+        
+        <div class="tabs">
+            <div class="tab active" data-tab="catalog">
+                <i class="fas fa-store"></i>
+                Каталог
+            </div>
+            <div class="tab" data-tab="balance">
+                <i class="fas fa-wallet"></i>
+                Баланс
+            </div>
+            <div class="tab" data-tab="orders">
+                <i class="fas fa-history"></i>
+                Заказы
+            </div>
+        </div>
+        
+        <div id="catalog-content" class="content active">
+            <div class="card">
+                <h2 class="card-title"><i class="fas fa-fire"></i> Популярные товары</h2>
+                <div class="products-grid" id="products-container">
+                    <div class="loader">
+                        <div class="loader-spinner"></div>
+                        <p>Загрузка товаров...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="balance-content" class="content">
+            <div class="card">
+                <h2 class="card-title"><i class="fas fa-wallet"></i> Мой баланс</h2>
+                <div class="balance-display">
+                    <div class="balance-label">Текущий баланс</div>
+                    <div class="balance-amount" id="balance-amount">
+                        <div class="loader-spinner" style="width: 30px; height: 30px; margin: 0 auto;"></div>
+                    </div>
+                </div>
+                
+                <div class="actions">
+                    <button class="btn" id="deposit-btn">
+                        <i class="fas fa-plus"></i> Пополнить
+                    </button>
+                    <button class="btn btn-outline" id="history-btn">
+                        <i class="fas fa-exchange-alt"></i> История
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div id="orders-content" class="content">
+            <div class="card">
+                <h2 class="card-title"><i class="fas fa-history"></i> История заказов</h2>
+                <div class="order-list" id="orders-container">
+                    <div class="loader">
+                        <div class="loader-spinner"></div>
+                        <p>Загрузка заказов...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="product-detail" id="product-detail">
+        <div class="product-detail-content">
+            <div class="detail-header">
+                <h2>Детали товара</h2>
+                <button class="detail-close" id="detail-close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="detail-image" id="detail-image"></div>
+            <h2 class="detail-title" id="detail-title"></h2>
+            <div class="detail-price" id="detail-price"></div>
+            <div class="detail-description" id="detail-description"></div>
+            <div class="actions">
+                <button class="detail-btn" id="buy-btn">
+                    <i class="fas fa-shopping-cart"></i> Купить
+                </button>
+                <button class="detail-btn detail-btn-outline" id="add-to-cart">
+                    <i class="fas fa-plus"></i> В корзину
+                </button>
+            </div>
+        </div>
+    </div>
 
     <script>
         // Инициализация Telegram WebApp
@@ -27,54 +648,51 @@
         tg.setHeaderColor('#6a11cb');
         tg.setBackgroundColor('#1a1a2e');
         
-        // Конфигурация API - ДОБАВИМ ПРОВЕРКУ НА ДОСТУПНОСТЬ
+        // Конфигурация API
         const API_BASE_URL = 'https://marketplace.pigfarm.ltd/api';
-        const ACCESS_TOKEN = 'T4hhhTxmRs_B8jjwKgw0FIjQGN0QtS4YigTHKyCrkzk';
+        const ACCESS_TOKEN = 'T4hhhTxmRs_B8jjwKgw0FIjQGN0QtS4YigTHKyCrkzk'; // Замените на реальный токен
         
         // Элементы интерфейса
-        // ... (без изменений) ...
+        const tabs = document.querySelectorAll('.tab');
+        const contents = document.querySelectorAll('.content');
+        const productsContainer = document.getElementById('products-container');
+        const ordersContainer = document.getElementById('orders-container');
+        const balanceAmount = document.getElementById('balance-amount');
+        const depositBtn = document.getElementById('deposit-btn');
+        const historyBtn = document.getElementById('history-btn');
+        const productDetail = document.getElementById('product-detail');
+        const detailClose = document.getElementById('detail-close');
         
-        // Состояние приложения - ДОБАВИМ ФЛАГ ДЛЯ ДЕМО-РЕЖИМА
+        // Состояние приложения
         let productsLoaded = false;
         let balanceLoaded = false;
         let ordersLoaded = false;
-        let useDemoData = false;
         
         // Инициализация приложения
         document.addEventListener('DOMContentLoaded', () => {
-            // ... (без изменений) ...
+            // Загрузка данных при первом открытии
+            if (document.getElementById('catalog-content').classList.contains('active')) {
+                loadProducts();
+            }
             
-            // Загружаем данные с проверкой доступности API
-            checkApiAvailability().then(available => {
-                if (available) {
-                    loadProducts();
-                } else {
-                    showNotification('API недоступно. Используются демо-данные');
-                    loadMockData();
-                    useDemoData = true;
-                }
+            // Настройка переключения вкладок
+            setupTabs();
+            
+            // Настройка кнопок
+            depositBtn.addEventListener('click', showDepositOptions);
+            historyBtn.addEventListener('click', showHistory);
+            detailClose.addEventListener('click', () => {
+                productDetail.classList.remove('active');
             });
         });
         
-        // Функция проверки доступности API
-        async function checkApiAvailability() {
-            try {
-                const response = await fetch(`${API_BASE_URL}/health`, {
-                    method: 'HEAD',
-                    timeout: 3000
-                });
-                return response.ok;
-            } catch (error) {
-                console.error('API недоступно:', error);
-                return false;
-            }
-        }
-
-        // Функция загрузки товаров - ДОБАВИМ ОБРАБОТКУ ОШИБОК
+        // Функция загрузки товаров
         async function loadProducts() {
             try {
+                // Показываем индикатор загрузки
                 productsContainer.innerHTML = '<div class="loader"><div class="loader-spinner"></div><p>Загрузка товаров...</p></div>';
                 
+                // Выполняем запрос к API
                 const response = await fetch(`${API_BASE_URL}/client/catalog`, {
                     headers: {
                         'Authorization': `Bearer ${ACCESS_TOKEN}`
@@ -87,44 +705,71 @@
                 
                 const data = await response.json();
                 
-                if (data?.items?.length > 0) {
+                // Обработка данных
+                if (data && data.items && data.items.length > 0) {
                     renderProducts(data.items);
                     productsLoaded = true;
                 } else {
-                    throw new Error('Товары не найдены');
+                    productsContainer.innerHTML = '<div class="error-message">Товары не найдены</div>';
                 }
             } catch (error) {
                 console.error('Ошибка при загрузке товаров:', error);
-                
-                // Добавим кнопку повтора и сообщение
                 productsContainer.innerHTML = `
                     <div class="error-message">
                         Ошибка загрузки: ${error.message}
                         <button class="retry-btn" id="retry-products">
-                            <i class="fas fa-sync-alt"></i> Повторить
+                            <i class="fas fa-sync-alt"></i> Повторить попытку
                         </button>
                     </div>
                 `;
                 
                 document.getElementById('retry-products').addEventListener('click', loadProducts);
-                
-                // Если API недоступно, используем демо-данные
-                if (!useDemoData) {
-                    setTimeout(() => {
-                        if (!productsLoaded) {
-                            loadMockData();
-                            useDemoData = true;
-                        }
-                    }, 2000);
-                }
             }
         }
         
-        // Функция загрузки баланса - ДОБАВИМ ОБРАБОТКУ ОШИБОК
+        // Функция отображения товаров
+        function renderProducts(products) {
+            productsContainer.innerHTML = '';
+            
+            products.forEach(product => {
+                const productCard = document.createElement('div');
+                productCard.className = 'product-card';
+                productCard.dataset.id = product.id;
+                
+                // Определяем класс для бейджа в зависимости от количества
+                let badgeClass = '';
+                if (product.stock < 10) {
+                    badgeClass = 'warning';
+                } else if (product.stock < 5) {
+                    badgeClass = 'error';
+                }
+                
+                productCard.innerHTML = `
+                    <div class="product-image" style="background-image: url('${product.image || 'https://via.placeholder.com/300x200?text=No+Image'}')"></div>
+                    <div class="product-info">
+                        <div class="product-name">${product.name}</div>
+                        <div class="product-price">${product.price.toLocaleString()} ₽</div>
+                        <div class="product-stats">
+                            <span>★ ${product.rating || 'Нет оценок'}</span>
+                            <span>${product.reviews || 0} отзывов</span>
+                        </div>
+                    </div>
+                    ${product.stock < 20 ? `<div class="badge ${badgeClass}">${product.stock} шт</div>` : ''}
+                `;
+                
+                // Добавляем обработчик клика
+                productCard.addEventListener('click', () => showProductDetail(product));
+                productsContainer.appendChild(productCard);
+            });
+        }
+        
+        // Функция загрузки баланса
         async function loadBalance() {
             try {
+                // Показываем индикатор загрузки
                 balanceAmount.innerHTML = '<div class="loader-spinner" style="width: 30px; height: 30px; margin: 0 auto;"></div>';
                 
+                // Выполняем запрос к API
                 const response = await fetch(`${API_BASE_URL}/client/balance`, {
                     headers: {
                         'Authorization': `Bearer ${ACCESS_TOKEN}`
@@ -136,24 +781,31 @@
                 }
                 
                 const data = await response.json();
+                
+                // Обновляем баланс
                 balanceAmount.innerHTML = `${data.balance.toLocaleString()}<span class="balance-currency">₽</span>`;
                 balanceLoaded = true;
             } catch (error) {
                 console.error('Ошибка при загрузке баланса:', error);
-                
-                // Установим демо-баланс
-                balanceAmount.innerHTML = `12 560<span class="balance-currency">₽</span>`;
-                balanceLoaded = true;
-                
-                showNotification(`Ошибка загрузки баланса: ${error.message}`);
+                balanceAmount.innerHTML = `
+                    <div class="error-message">
+                        Ошибка загрузки баланса
+                        <button class="retry-btn" id="retry-balance">
+                            <i class="fas fa-sync-alt"></i> Повторить
+                        </button>
+                    </div>
+                `;
+                document.getElementById('retry-balance').addEventListener('click', loadBalance);
             }
         }
         
-        // Функция загрузки заказов - ДОБАВИМ ОБРАБОТКУ ОШИБОК
+        // Функция загрузки заказов
         async function loadOrders() {
             try {
+                // Показываем индикатор загрузки
                 ordersContainer.innerHTML = '<div class="loader"><div class="loader-spinner"></div><p>Загрузка заказов...</p></div>';
                 
+                // Выполняем запрос к API
                 const response = await fetch(`${API_BASE_URL}/client/orders`, {
                     headers: {
                         'Authorization': `Bearer ${ACCESS_TOKEN}`
@@ -166,16 +818,15 @@
                 
                 const data = await response.json();
                 
-                if (data?.orders?.length > 0) {
+                // Обработка данных
+                if (data && data.orders && data.orders.length > 0) {
                     renderOrders(data.orders);
                     ordersLoaded = true;
                 } else {
-                    throw new Error('Заказов нет');
+                    ordersContainer.innerHTML = '<div class="error-message">Заказов нет</div>';
                 }
             } catch (error) {
                 console.error('Ошибка при загрузке заказов:', error);
-                
-                // Добавим кнопку повтора и сообщение
                 ordersContainer.innerHTML = `
                     <div class="error-message">
                         Ошибка загрузки: ${error.message}
@@ -184,147 +835,148 @@
                         </button>
                     </div>
                 `;
-                
                 document.getElementById('retry-orders').addEventListener('click', loadOrders);
-                
-                // Если API недоступно, используем демо-данные
-                if (!useDemoData) {
-                    setTimeout(() => {
-                        if (!ordersLoaded) {
-                            loadMockData();
-                            useDemoData = true;
-                        }
-                    }, 2000);
-                }
             }
         }
         
-        // Функция отображения товаров - УПРОЩИМ ДЕМО-ДАННЫЕ
-        function renderProducts(products) {
-            productsContainer.innerHTML = '';
-            
-            products.forEach(product => {
-                // ... (без изменений) ...
-            });
-        }
-        
-        // Имитация данных для демонстрации - ОБНОВИМ ДАННЫЕ
-        function loadMockData() {
-            console.warn('Используются демонстрационные данные');
-            useDemoData = true;
-            
-            // Демо-товары
-            const mockProducts = [
-                { 
-                    id: 1, 
-                    name: "Кроссовки Nike Air Force", 
-                    price: 8900, 
-                    image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80", 
-                    rating: 4.8, 
-                    reviews: 124, 
-                    stock: 15,
-                    description: "Классические кроссовки Nike Air Force с современным дизайном и улучшенным комфортом."
-                },
-                { 
-                    id: 2, 
-                    name: "Футболка Oversize", 
-                    price: 2490, 
-                    image: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80", 
-                    rating: 4.5, 
-                    reviews: 87, 
-                    stock: 42,
-                    description: "Стильная оверсайз футболка из хлопка премиум качества."
-                },
-                { 
-                    id: 3, 
-                    name: "Джинсы Slim Fit", 
-                    price: 4500, 
-                    image: "https://images.unsplash.com/photo-1542272604-787c3835535d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80", 
-                    rating: 4.7, 
-                    reviews: 210, 
-                    stock: 8,
-                    description: "Ультрамодные джинсы slim fit с эластичным материалом."
-                },
-                { 
-                    id: 4, 
-                    name: "Куртка Windbreaker", 
-                    price: 7800, 
-                    image: "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80", 
-                    rating: 4.9, 
-                    reviews: 156, 
-                    stock: 5,
-                    description: "Легкая ветровка с водоотталкивающей пропиткой."
-                }
-            ];
-            
-            renderProducts(mockProducts);
-            productsLoaded = true;
-            
-            // Демо-баланс
-            balanceAmount.innerHTML = `12 560<span class="balance-currency">₽</span>`;
-            balanceLoaded = true;
-            
-            // Демо-заказы
-            const mockOrders = [
-                { 
-                    id: "#PF-4826", 
-                    date: "2023-06-15", 
-                    amount: 8900, 
-                    status: "completed", 
-                    items: 1,
-                    title: "Кроссовки Nike Air Force"
-                },
-                { 
-                    id: "#PF-5129", 
-                    date: "2023-06-10", 
-                    amount: 12990, 
-                    status: "completed", 
-                    items: 3,
-                    title: "Футболка Oversize + аксессуары"
-                },
-                { 
-                    id: "#PF-4983", 
-                    date: "2023-06-05", 
-                    amount: 4500, 
-                    status: "pending", 
-                    items: 1,
-                    title: "Джинсы Slim Fit"
-                }
-            ];
-            
-            renderOrders(mockOrders);
-            ordersLoaded = true;
-        }
-
-        // Функция отображения заказов - ОБНОВИМ ДЛЯ ДЕМО-ДАННЫХ
+        // Функция отображения заказов
         function renderOrders(orders) {
             ordersContainer.innerHTML = '';
             
             orders.forEach(order => {
-                // ... (код из предыдущей версии с добавлением order.title) ...
+                const orderItem = document.createElement('div');
+                orderItem.className = 'order-item';
+                
+                // Определяем иконку и цвет в зависимости от статуса
+                let icon = '';
+                let statusClass = '';
+                let statusText = '';
+                
+                switch(order.status) {
+                    case 'completed':
+                        icon = 'fas fa-check-circle';
+                        statusClass = 'status-completed';
+                        statusText = 'Выполнен';
+                        break;
+                    case 'pending':
+                        icon = 'fas fa-clock';
+                        statusClass = 'status-pending';
+                        statusText = 'В обработке';
+                        break;
+                    case 'canceled':
+                        icon = 'fas fa-times-circle';
+                        statusClass = 'status-canceled';
+                        statusText = 'Отменён';
+                        break;
+                    default:
+                        icon = 'fas fa-info-circle';
+                        statusClass = 'status-pending';
+                        statusText = order.status;
+                }
+                
                 orderItem.innerHTML = `
                     <div class="order-icon">
                         <i class="${icon}"></i>
                     </div>
                     <div class="order-details">
                         <div class="order-id">${order.id} • ${new Date(order.date).toLocaleDateString()}</div>
-                        <div class="order-status">${order.title || `${order.items} товара`} • <span class="order-price">${order.amount.toLocaleString()} ₽</span></div>
+                        <div class="order-status">${order.items} товара • <span class="order-price">${order.amount.toLocaleString()} ₽</span></div>
                     </div>
                     <div class="status-badge ${statusClass}">${statusText}</div>
                 `;
-                // ... (остальное без изменений) ...
+                
+                ordersContainer.appendChild(orderItem);
             });
         }
-
-        // ... (остальные функции без изменений) ...
-
-        // Если API недоступно, загружаем демо-данные сразу
-        setTimeout(() => {
-            if (!productsLoaded && !useDemoData) {
-                showNotification('Используются демо-данные');
-                loadMockData();
-            }
-        }, 3000);
+        
+        // Показать детали товара
+        function showProductDetail(product) {
+            document.getElementById('detail-image').style.backgroundImage = `url('${product.image || 'https://via.placeholder.com/300x200?text=No+Image'}')`;
+            document.getElementById('detail-title').textContent = product.name;
+            document.getElementById('detail-price').textContent = `${product.price.toLocaleString()} ₽`;
+            document.getElementById('detail-description').textContent = product.description || 'Описание отсутствует';
+            
+            // Настройка кнопок
+            document.getElementById('buy-btn').onclick = () => buyProduct(product);
+            document.getElementById('add-to-cart').onclick = () => addToCart(product);
+            
+            // Показываем детали
+            productDetail.classList.add('active');
+        }
+        
+        // Купить товар
+        function buyProduct(product) {
+            showNotification(`Товар "${product.name}" добавлен в заказы!`);
+            // Здесь будет вызов API для создания заказа
+            setTimeout(() => {
+                productDetail.classList.remove('active');
+            }, 1000);
+        }
+        
+        // Добавить в корзину
+        function addToCart(product) {
+            showNotification(`Товар "${product.name}" добавлен в корзину!`);
+            // Здесь будет логика добавления в корзину
+            setTimeout(() => {
+                productDetail.classList.remove('active');
+            }, 1000);
+        }
+        
+        // Настройка переключения вкладок
+        function setupTabs() {
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    // Убираем активный класс у всех вкладок
+                    tabs.forEach(t => t.classList.remove('active'));
+                    contents.forEach(c => c.classList.remove('active'));
+                    
+                    // Добавляем активный класс текущей вкладке
+                    tab.classList.add('active');
+                    
+                    // Показываем соответствующий контент
+                    const tabName = tab.getAttribute('data-tab');
+                    document.getElementById(`${tabName}-content`).classList.add('active');
+                    
+                    // Загружаем данные при необходимости
+                    if (tabName === 'catalog' && !productsLoaded) {
+                        loadProducts();
+                    } else if (tabName === 'balance' && !balanceLoaded) {
+                        loadBalance();
+                    } else if (tabName === 'orders' && !ordersLoaded) {
+                        loadOrders();
+                    }
+                });
+            });
+        }
+        
+        // Показать опции пополнения баланса
+        function showDepositOptions() {
+            // В реальном приложении здесь будет логика пополнения
+            showNotification('Функция пополнения в разработке');
+        }
+        
+        // Показать историю транзакций
+        function showHistory() {
+            // В реальном приложении здесь будет переход к истории
+            showNotification('История транзакций в разработке');
+        }
+        
+        // Показать уведомление
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.innerHTML = `
+                <i class="fas fa-info-circle"></i>
+                <span>${message}</span>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Удаляем уведомление через 3 секунды
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
     </script>
 </body>
 </html>
